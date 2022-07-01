@@ -4,22 +4,37 @@
   ansible.builtin.set_fact:
     swap_enabled: "{{ system_swap_enabled }}"
   when: system_swap_enabled is defined
+  tags:
+    - setup-all
+    - system-swap
 - name: Migration (swap_size)
   ansible.builtin.set_fact:
     swap_size: "{{ system_swap_size }}"
   when: system_swap_size is defined
+  tags:
+    - setup-all
+    - system-swap
 - name: Migration (swap_path)
   ansible.builtin.set_fact:
     swap_path: "{{ system_swap_path }}"
   when: system_swap_path is defined
+  tags:
+    - setup-all
+    - system-swap
 - name: Migration (swap_sysctl)
   ansible.builtin.set_fact:
     swap_sysctl: "{{ system_swap_sysctl }}"
   when: system_swap_sysctl is defined
+  tags:
+    - setup-all
+    - system-swap
 - name: Migration (swap_fallocate)
   ansible.builtin.set_fact:
     swap_fallocate: "{{ system_swap_fallocate }}"
   when: system_swap_fallocate is defined
+  tags:
+    - setup-all
+    - system-swap
 
 - name: Allocate space
   ansible.builtin.command: |
