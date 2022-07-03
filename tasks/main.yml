@@ -1,78 +1,41 @@
 ---
-# TODO: remove after migration
-- name: Migration (swap_enabled)
-  ansible.builtin.set_fact:
-    swap_enabled: "{{ system_swap_enabled }}"
-  when: system_swap_enabled is defined
-  tags:
-    - setup-all
-    - system-swap
-- name: Migration (swap_size)
-  ansible.builtin.set_fact:
-    swap_size: "{{ system_swap_size }}"
-  when: system_swap_size is defined
-  tags:
-    - setup-all
-    - system-swap
-- name: Migration (swap_path)
-  ansible.builtin.set_fact:
-    swap_path: "{{ system_swap_path }}"
-  when: system_swap_path is defined
-  tags:
-    - setup-all
-    - system-swap
-- name: Migration (swap_sysctl)
-  ansible.builtin.set_fact:
-    swap_sysctl: "{{ system_swap_sysctl }}"
-  when: system_swap_sysctl is defined
-  tags:
-    - setup-all
-    - system-swap
-- name: Migration (swap_fallocate)
-  ansible.builtin.set_fact:
-    swap_fallocate: "{{ system_swap_fallocate }}"
-  when: system_swap_fallocate is defined
-  tags:
-    - setup-all
-    - system-swap
-
 - name: Allocate space
   ansible.builtin.command: |
-    {% if swap_fallocate %}
-    fallocate -l {{ ((swap_size) | int * 1024 * 1024) }} {{ swap_path }}
+    {% if system_swap_fallocate %}
+    fallocate -l {{ ((system_swap_size) | int * 1024 * 1024) }} {{ system_swap_path }}
     {% else %}
-    dd if=/dev/zero of={{ swap_path }} bs=1M count={{ swap_size }}
+    dd if=/dev/zero of={{ system_swap_path }} bs=1M count={{ system_swap_size }}
     {% endif %}
   args:
-    creates: "{{ swap_path }}"
-  register: swap_file
-  when: swap_enabled|bool
+    creates: "{{ system_swap_path }}"
+  register: system_swap_file
+  when: system_swap_enabled|bool
   tags:
     - setup-all
     - system-swap
 
 - name: Set file permissions
   ansible.builtin.file:
-    path: "{{ swap_path }}"
+    path: "{{ system_swap_path }}"
     state: file
     owner: root
     group: root
     mode: '0600'
-  when: swap_enabled|bool and swap_file is changed
+  when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
     - system-swap
 
 - name: Create swap
-  ansible.builtin.command: "mkswap {{ swap_path }}"
-  when: swap_enabled|bool and swap_file is changed
+  ansible.builtin.command: "mkswap {{ system_swap_path }}"
+  when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
     - system-swap
 
 - name: Enable swap
-  ansible.builtin.command: "swapon {{ swap_path }}"
-  when: swap_enabled|bool and swap_file is changed
+  ansible.builtin.command: "swapon {{ system_swap_path }}"
+  when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
     - system-swap
@@ -80,13 +43,13 @@
 - name: Persist swap config in /etc/fstab
   ansible.builtin.mount:
     name: none
-    src: "{{ swap_path }}"
+    src: "{{ system_swap_path }}"
     fstype: swap
     opts: sw,nofail
     dump: '0'
     passno: '0'
     state: present
-  when: swap_enabled|bool and swap_file is changed
+  when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
     - system-swap
@@ -97,8 +60,8 @@
     value: "{{ item.value }}"
     state: present
     reload: true
-  with_items: "{{ swap_sysctl }}"
-  when: swap_enabled|bool and swap_file is changed
+  with_items: "{{ system_swap_sysctl }}"
+  when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
     - system-swap
