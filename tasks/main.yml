@@ -13,6 +13,8 @@
   tags:
     - setup-all
     - setup-swap
+    - install-all
+    - install-swap
 
 - name: Set file permissions
   ansible.builtin.file:
@@ -25,6 +27,8 @@
   tags:
     - setup-all
     - setup-swap
+    - install-all
+    - install-swap
 
 - name: Create swap
   ansible.builtin.command: "mkswap {{ system_swap_path }}"
@@ -32,6 +36,8 @@
   tags:
     - setup-all
     - setup-swap
+    - install-all
+    - install-swap
 
 - name: Enable swap
   ansible.builtin.command: "swapon {{ system_swap_path }}"
@@ -39,6 +45,8 @@
   tags:
     - setup-all
     - setup-swap
+    - install-all
+    - install-swap
 
 - name: Persist swap config in /etc/fstab
   ansible.builtin.mount:
@@ -53,6 +61,8 @@
   tags:
     - setup-all
     - setup-swap
+    - install-all
+    - install-swap
 
 - name: Set sysctl params
   ansible.builtin.sysctl:
@@ -65,3 +75,5 @@
   tags:
     - setup-all
     - setup-swap
+    - install-all
+    - install-swap
