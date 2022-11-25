@@ -12,7 +12,7 @@
   when: system_swap_enabled|bool
   tags:
     - setup-all
-    - system-swap
+    - setup-swap
 
 - name: Set file permissions
   ansible.builtin.file:
@@ -24,21 +24,21 @@
   when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
-    - system-swap
+    - setup-swap
 
 - name: Create swap
   ansible.builtin.command: "mkswap {{ system_swap_path }}"
   when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
-    - system-swap
+    - setup-swap
 
 - name: Enable swap
   ansible.builtin.command: "swapon {{ system_swap_path }}"
   when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
-    - system-swap
+    - setup-swap
 
 - name: Persist swap config in /etc/fstab
   ansible.builtin.mount:
@@ -52,7 +52,7 @@
   when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
-    - system-swap
+    - setup-swap
 
 - name: Set sysctl params
   ansible.builtin.sysctl:
@@ -64,4 +64,4 @@
   when: system_swap_enabled|bool and system_swap_file is changed
   tags:
     - setup-all
-    - system-swap
+    - setup-swap
