@@ -14,6 +14,3 @@ system_swap_sysctl:
     value: 60
   - name: vm.vfs_cache_pressure
     value: 100
-
-# use fallocate instead of dd
-system_swap_fallocate: true

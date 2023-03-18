@@ -1,79 +1,24 @@
 ---
-- name: Allocate space
-  ansible.builtin.command: |
-    {% if system_swap_fallocate %}
-    fallocate -l {{ ((system_swap_size) | int * 1024 * 1024) }} {{ system_swap_path }}
-    {% else %}
-    dd if=/dev/zero of={{ system_swap_path }} bs=1M count={{ system_swap_size }}
-    {% endif %}
-  args:
-    creates: "{{ system_swap_path }}"
-  register: system_swap_file
-  when: system_swap_enabled|bool
-  tags:
-    - setup-all
-    - setup-swap
-    - install-all
-    - install-swap
-
-- name: Set file permissions
-  ansible.builtin.file:
+- name: Check existence of swap file
+  ansible.builtin.stat:
     path: "{{ system_swap_path }}"
-    state: file
-    owner: root
-    group: root
-    mode: '0600'
-  when: system_swap_enabled|bool and system_swap_file is changed
+  register: system_swap_file
   tags:
     - setup-all
-    - setup-swap
+    - setup-system-swap
     - install-all
-    - install-swap
+    - install-system-swap
 
-- name: Create swap
-  ansible.builtin.command: "mkswap {{ system_swap_path }}"
-  when: system_swap_enabled|bool and system_swap_file is changed
+- ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
+  when: system_swap_enabled | bool and not system_swap_file.stat.exists | bool
   tags:
     - setup-all
-    - setup-swap
+    - setup-system-swap
     - install-all
-    - install-swap
+    - install-system-swap
 
-- name: Enable swap
-  ansible.builtin.command: "swapon {{ system_swap_path }}"
-  when: system_swap_enabled|bool and system_swap_file is changed
+- ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
+  when: not system_swap_enabled | bool and system_swap_file.stat.exists | bool
   tags:
     - setup-all
-    - setup-swap
-    - install-all
-    - install-swap
-
-- name: Persist swap config in /etc/fstab
-  ansible.builtin.mount:
-    name: none
-    src: "{{ system_swap_path }}"
-    fstype: swap
-    opts: sw,nofail
-    dump: '0'
-    passno: '0'
-    state: present
-  when: system_swap_enabled|bool and system_swap_file is changed
-  tags:
-    - setup-all
-    - setup-swap
-    - install-all
-    - install-swap
-
-- name: Set sysctl params
-  ansible.builtin.sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    state: present
-    reload: true
-  with_items: "{{ system_swap_sysctl }}"
-  when: system_swap_enabled|bool and system_swap_file is changed
-  tags:
-    - setup-all
-    - setup-swap
-    - install-all
-    - install-swap
+    - setup-system-swap
