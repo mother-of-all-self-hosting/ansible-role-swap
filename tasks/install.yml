@@ -13,11 +13,6 @@
       ansible.builtin.command: "dd if=/dev/zero of={{ system_swap_path }} bs=1M count={{ system_swap_size }}"
       args:
         creates: "{{ system_swap_path }}"
-      tags:
-        - setup-all
-        - setup-system-swap
-        - install-all
-        - install-system-swap
 
     - name: Set file permissions
       ansible.builtin.file:
