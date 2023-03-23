@@ -2,6 +2,9 @@
 
 - name: Ensure swap is disabled
   ansible.builtin.command: "swapoff {{ system_swap_path }}"
+  tags:
+    - setup-all
+    - setup-system-swap
 
 - name: Ensure swap is absent in /etc/fstab
   ansible.posix.mount:
@@ -12,8 +15,14 @@
     dump: '0'
     passno: '0'
     state: present
+  tags:
+    - setup-all
+    - setup-system-swap
 
 - name: Ensure swap file removed
   ansible.builtin.file:
     path: "{{ system_swap_path }}"
     state: absent
+  tags:
+    - setup-all
+    - setup-system-swap

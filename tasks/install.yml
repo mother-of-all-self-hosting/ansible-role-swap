@@ -4,6 +4,11 @@
   ansible.builtin.command: "dd if=/dev/zero of={{ system_swap_path }} bs=1M count={{ system_swap_size }}"
   args:
     creates: "{{ system_swap_path }}"
+  tags:
+    - setup-all
+    - setup-system-swap
+    - install-all
+    - install-system-swap
 
 - name: Set file permissions
   ansible.builtin.file:
@@ -12,12 +17,27 @@
     owner: root
     group: root
     mode: '0600'
+  tags:
+    - setup-all
+    - setup-system-swap
+    - install-all
+    - install-system-swap
 
 - name: Create swap
   ansible.builtin.command: "mkswap {{ system_swap_path }}"
+  tags:
+    - setup-all
+    - setup-system-swap
+    - install-all
+    - install-system-swap
 
 - name: Enable swap
   ansible.builtin.command: "swapon {{ system_swap_path }}"
+  tags:
+    - setup-all
+    - setup-system-swap
+    - install-all
+    - install-system-swap
 
 - name: Persist swap config in /etc/fstab
   ansible.posix.mount:
@@ -28,6 +48,11 @@
     dump: '0'
     passno: '0'
     state: present
+  tags:
+    - setup-all
+    - setup-system-swap
+    - install-all
+    - install-system-swap
 
 - name: Set sysctl params
   ansible.posix.sysctl:
@@ -36,3 +61,8 @@
     state: present
     reload: true
   with_items: "{{ system_swap_sysctl }}"
+  tags:
+    - setup-all
+    - setup-system-swap
+    - install-all
+    - install-system-swap
