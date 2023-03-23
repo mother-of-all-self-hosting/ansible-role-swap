@@ -5,7 +5,7 @@
     path: "{{ system_swap_path }}"
   register: system_swap_file
 
-- when: not system_swap_file.stat.exists | bool
+- when: system_swap_file.stat.exists | bool
   block:
     - name: Ensure swap is disabled
       ansible.builtin.command: "swapoff {{ system_swap_path }}"
