@@ -1,24 +1,19 @@
 ---
-- name: Check existence of swap file
-  ansible.builtin.stat:
-    path: "{{ system_swap_path }}"
-  register: system_swap_file
-  tags:
+
+- tags:
     - setup-all
     - setup-system-swap
     - install-all
     - install-system-swap
+  block:
+    - name: Run swap installation tasks
+      when: system_swap_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
-- ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
-  when: system_swap_enabled | bool and not system_swap_file.stat.exists | bool
-  tags:
+- tags:
     - setup-all
     - setup-system-swap
-    - install-all
-    - install-system-swap
-
-- ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
-  when: not system_swap_enabled | bool and system_swap_file.stat.exists | bool
-  tags:
-    - setup-all
-    - setup-system-swap
+  block:
+    - name: Run swap uninstallation tasks
+      when: not system_swap_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
