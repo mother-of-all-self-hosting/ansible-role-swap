@@ -2,8 +2,8 @@
 # enable swap file
 system_swap_enabled: true
 
-# total RAM * 2 if total RAM <= 2GB, otherwise - 1GB
-system_swap_size: "{{ ((ansible_memtotal_mb | int * 2) if (ansible_memtotal_mb | int <= 2048) else '1024') }}"
+# in megabytes
+system_swap_size: 1024
 
 # swap file path
 system_swap_path: /var/swap
