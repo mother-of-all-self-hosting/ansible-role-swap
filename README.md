@@ -18,3 +18,7 @@ system_swap_enabled: true
 ```
 
 > **NOTE**: check [defaults/main.yml](./defaults/main.yml) to see full list of config options
+
+## Testing
+
+This role has a [Molecule](https://ansible.readthedocs.io/projects/molecule/) test suite. See [molecule/README.md](./molecule/README.md), which also explains what such a suite can and cannot prove about a role that manages kernel swap from inside a container.
