@@ -30,6 +30,22 @@
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
             name: swap_role_defaults
 
+        # Everything below is about the role removing the file it was given
+        # rather than a path it knows by heart. That only means something while
+        # the path it was given is not the one it would have used anyway.
+        - name: Assert that this scenario exercises a path the role does not default to
+          ansible.builtin.assert:
+            that:
+              - system_swap_path != swap_role_defaults.system_swap_path
+              - swap_molecule_decoy_path != swap_role_defaults.system_swap_path
+            fail_msg: >-
+              This scenario is configured with {{ system_swap_path }}, which is the role's own
+              default. A role that ignored `system_swap_path` entirely would pass every assertion
+              below.
+            success_msg: >-
+              This scenario uses {{ system_swap_path }}, not the role's default of
+              {{ swap_role_defaults.system_swap_path }}
+
         ########################################################################
         #                                                                      #
         # the swap file, and the one the role was never told about             #
