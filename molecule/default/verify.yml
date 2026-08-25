@@ -172,28 +172,42 @@
         # The honest half of the assertion above. The shim answered for the
         # kernel, and the kernel really did not enable anything - so a green run
         # of this scenario says the role asked correctly, not that swapping
-        # works. Anything showing up in /proc/swaps here would mean the container
-        # gained the ability to touch the host's swap subsystem, which is exactly
-        # what prepare.yml refuses to allow.
+        # works.
+        #
+        # /proc/swaps belongs to the kernel, which this container shares, so it
+        # lists whatever the machine running the suite has enabled - a 4 GB
+        # /mnt/swapfile on a GitHub Actions runner, usually nothing on a laptop.
+        # What must hold is that it is exactly what prepare.yml saw before the
+        # role ran. Anything else would mean the container gained the ability to
+        # touch that machine's swap subsystem, which is what prepare.yml refuses
+        # to allow - and would leave it swapping onto a file `molecule destroy`
+        # is about to delete.
         - name: Read the kernel's list of active swap areas
           ansible.builtin.slurp:
             src: /proc/swaps
           register: swap_molecule_proc_swaps
 
-        - name: Assert that no swap was actually activated
+        - name: Read the kernel's swap areas as they were before the role ran
+          ansible.builtin.slurp:
+            src: /var/lib/molecule-swap-proc-swaps-before
+          register: swap_molecule_proc_swaps_before
+
+        - name: Assert that the role activated no swap on the machine running the suite
           vars:
-            swap_molecule_active: >-
-              {{ (swap_molecule_proc_swaps.content | b64decode).splitlines()[1:] | select() | list }}
+            swap_molecule_active: "{{ swap_molecule_proc_swaps.content | b64decode }}"
+            swap_molecule_active_before: "{{ swap_molecule_proc_swaps_before.content | b64decode }}"
           ansible.builtin.assert:
-            that: swap_molecule_active | length == 0
+            that:
+              - system_swap_path not in swap_molecule_active
+              - swap_molecule_active == swap_molecule_active_before
             fail_msg: >-
-              The kernel reports active swap areas: {{ swap_molecule_active }}. This container has
-              no CAP_SYS_ADMIN and shares its kernel with the machine running this suite, so this
-              should be impossible - and if it happened, that machine is now swapping onto a file
-              that `molecule destroy` is about to delete.
+              The kernel's swap areas changed while the role ran. Before:
+              {{ swap_molecule_active_before }} After: {{ swap_molecule_active }}. The machine
+              running this suite may now be swapping onto a file that `molecule destroy` is about to
+              delete - check `swapon --show` on it.
             success_msg: >-
-              /proc/swaps is empty: the shim answered for the kernel and nothing was enabled on the
-              machine running this suite
+              The kernel's swap areas are unchanged and do not include {{ system_swap_path }}: the
+              shim answered for the kernel and nothing was enabled on the machine running this suite
 
         ########################################################################
         #                                                                      #

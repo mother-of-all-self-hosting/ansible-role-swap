@@ -56,7 +56,7 @@ So what a green run proves is:
 
 What it does not prove, and cannot without a virtual machine:
 
-- **that the swap is actually usable.** The kernel never sees it. `verify.yml` asserts `/proc/swaps` is *empty*, which is the honest counterpart to the shim, and is also how a container that somehow gained the ability to touch the host's swap would be caught.
+- **that the swap is actually usable.** The kernel never sees it. `verify.yml` asserts instead that the kernel's list of swap areas came through the run *unchanged* and never mentions the role's swap file. `/proc/swaps` belongs to the shared kernel, so it lists whatever the machine running the suite has enabled — a 4 GB `/mnt/swapfile` on a GitHub Actions runner, usually nothing on a laptop. That is the honest counterpart to the shim, and is also how a container that somehow gained the ability to touch that machine's swap would be caught.
 - **that the kernel accepts the parameter values.** `vm.swappiness` is never really set; what is asserted is the value the role handed to `sysctl`, recovered from the shim's store.
 
 Both scenarios leave `idempotence` out of their test sequence. The role is idempotent where it matters — the whole initialization block is skipped once the swap file exists — but `ansible.posix.sysctl` reports a change whenever it reloads, so Molecule's own idempotence step would fail on something harmless. What a second run must not do is rewrite the swap file or repeat the destructive steps, and each scenario runs the role twice and asserts that directly instead.

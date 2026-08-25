@@ -229,6 +229,31 @@
       loop_control:
         label: "{{ item.item }}"
 
+    # /proc/swaps is the kernel's, and the kernel is shared: what shows up in
+    # here is whatever the machine running the suite has enabled. On a GitHub
+    # Actions runner that is a 4 GB /mnt/swapfile, and on a laptop it is usually
+    # nothing. Recording it now lets verify.yml assert that the role changed
+    # none of it, rather than assert an emptiness that only holds on some
+    # machines.
+    - name: Record the kernel's swap areas as they are before the role runs
+      ansible.builtin.slurp:
+        src: /proc/swaps
+      register: swap_molecule_proc_swaps_before
+
+    - name: Save the kernel's swap areas for the verification play
+      ansible.builtin.copy:
+        dest: /var/lib/molecule-swap-proc-swaps-before
+        content: "{{ swap_molecule_proc_swaps_before.content | b64decode }}"
+        mode: "0644"
+
+    - name: Assert that the machine running the suite is not already swapping onto this path
+      ansible.builtin.assert:
+        that: system_swap_path not in (swap_molecule_proc_swaps_before.content | b64decode)
+        fail_msg: >-
+          {{ system_swap_path }} is already an active swap area on the machine running this suite:
+          {{ swap_molecule_proc_swaps_before.content | b64decode }}
+        success_msg: "The kernel is not swapping onto {{ system_swap_path }}"
+
     - name: Read /etc/fstab as it is before the role runs
       ansible.builtin.slurp:
         src: /etc/fstab
