@@ -16,6 +16,7 @@
     loop_var: swap_file
 
 - name: Set sysctl params
+  ignore_errors: "{{ system_swap_ignore_errors }}"
   ansible.posix.sysctl:
     name: "{{ item.name }}"
     value: "{{ item.value }}"
