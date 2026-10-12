@@ -10,32 +10,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 This is an [Ansible](https://www.ansible.com/) role which manages [swap](https://wiki.archlinux.org/title/Swap) files on a Linux host.
 
-Unlike most other roles in this collection, this one does not run a container. It creates swap files on the host itself, enables them and registers them in `/etc/fstab`. It also sets the kernel parameters in `system_swap_sysctl`, which are `vm.swappiness` and `vm.vfs_cache_pressure` by default.
-
-Swap files are assembled from 3 lists, in this order:
-
-- `system_swap_files_default` — a single swap file, described by `system_swap_path`, `system_swap_size` and `system_swap_priority`. If one swap file is all you need, set those and nothing else.
-- `system_swap_files_auto` — swap files contributed by a playbook or a group. You most likely do not want to set these yourself.
-- `system_swap_files_custom` — additional swap files of your own. **This is the variable you want.**
-
-Each swap file is a dictionary with `path` and `size` (in megabytes) keys, and optional `priority` and `state` keys:
-
-- `priority` is a number from 0 to 32767. The kernel fills the swap file with the highest priority first and spreads pages evenly over those of the same priority. Without one, it uses the swap files one after another, in the order they were enabled.
-- `state: absent` removes a swap file that was previously created: the role disables it, takes it out of `/etc/fstab` and deletes it. Dropping it from the list instead leaves it in place, as the role only acts on the swap files it is told about.
-
-To move swap from one file to another in a single run, describe the new swap file and mark the old one as absent. The role enables the new one before it disables the old one:
+By default it creates a single 1 GB swap file at `/var/swap`. To change that, or to add more:
 
 ```yaml
-system_swap_path: /mnt/data/swap
+# The first swap file (size in megabytes)
+system_swap_path: /var/swap
+system_swap_size: 1024
 
+# Any additional swap files
 system_swap_files_custom:
-  - path: /var/swap
-    state: absent
+  - path: /mnt/data/swap
+    size: 4096
 ```
 
-Check [`defaults/main.yml`](defaults/main.yml) for the full list of supported options.
+Each entry also takes an optional `priority`, and `state: absent` to remove a swap file.
 
-💡 For an Ansible playbook which integrates this role and makes it easier to use, see the [Mother-of-All-Self-Hosting Ansible playbook](https://github.com/mother-of-all-self-hosting/mash-playbook).
+Check [`defaults/main.yml`](defaults/main.yml) for the full list of supported options.
 
 ## Limitations
 
