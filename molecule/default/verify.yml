@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2026 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2026 spatterlight
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -182,6 +183,13 @@
         # touch that machine's swap subsystem, which is what prepare.yml refuses
         # to allow - and would leave it swapping onto a file `molecule destroy`
         # is about to delete.
+        #
+        # "Exactly" stops short of one column. How much of each swap area is in
+        # use moves whenever the machine running the suite swaps, which on a
+        # machine with swap in use is all the time, and says nothing about what
+        # the role did - so that column is blanked on both sides before they are
+        # compared. The areas themselves, their sizes and their priorities are
+        # not.
         - name: Read the kernel's list of active swap areas
           ansible.builtin.slurp:
             src: /proc/swaps
@@ -194,11 +202,18 @@
 
         - name: Assert that the role activated no swap on the machine running the suite
           vars:
-            swap_molecule_active: "{{ swap_molecule_proc_swaps.content | b64decode }}"
-            swap_molecule_active_before: "{{ swap_molecule_proc_swaps_before.content | b64decode }}"
+            # /proc/swaps reads `Filename Type Size Used Priority`.
+            swap_molecule_used_column: '^(\S+\s+\S+\s+\S+\s+)\S+'
+            swap_molecule_used_blanked: '\1-'
+            swap_molecule_active: >-
+              {{ (swap_molecule_proc_swaps.content | b64decode).splitlines()
+                 | map('regex_replace', swap_molecule_used_column, swap_molecule_used_blanked) | list }}
+            swap_molecule_active_before: >-
+              {{ (swap_molecule_proc_swaps_before.content | b64decode).splitlines()
+                 | map('regex_replace', swap_molecule_used_column, swap_molecule_used_blanked) | list }}
           ansible.builtin.assert:
             that:
-              - system_swap_path not in swap_molecule_active
+              - system_swap_path not in swap_molecule_active | join(' ')
               - swap_molecule_active == swap_molecule_active_before
             fail_msg: >-
               The kernel's swap areas changed while the role ran. Before:
